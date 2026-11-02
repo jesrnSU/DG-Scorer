@@ -60,12 +60,13 @@ func saveUserRound(service *rounds.Service) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		if err := service.SaveRound(c.Request.Context(), round); err != nil {
+		id, err := service.SaveRound(c.Request.Context(), round)
+		if err != nil {
 			_ = c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save round"})
 			return
 		}
-		c.JSON(http.StatusCreated, gin.H{"message": "round saved"})
+		c.JSON(http.StatusCreated, gin.H{"id": id, "message": "round saved"})
 	}
 }
 

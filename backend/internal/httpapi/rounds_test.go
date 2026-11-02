@@ -14,9 +14,9 @@ import (
 	"github.com/jesrnsu/jesrnsu.github.io/internal/rounds"
 )
 
-type roundStoreFunc func(context.Context, rounds.Round) error
+type roundStoreFunc func(context.Context, rounds.Round) (int64, error)
 
-func (f roundStoreFunc) SaveRound(ctx context.Context, round rounds.Round) error {
+func (f roundStoreFunc) SaveRound(ctx context.Context, round rounds.Round) (int64, error) {
 	return f(ctx, round)
 }
 
@@ -46,7 +46,7 @@ func TestSaveRoundEndpoint(t *testing.T) {
 			calls := 0
 			var service *rounds.Service
 			if !tt.unavailable {
-				service = rounds.NewService(roundStoreFunc(func(ctx context.Context, round rounds.Round) error {
+				service = rounds.NewService(roundStoreFunc(func(ctx context.Context, round rounds.Round) (int64, error) {
 					calls++
 					if ctx != request.Context() {
 						t.Error("request context was not forwarded")
@@ -54,13 +54,24 @@ func TestSaveRoundEndpoint(t *testing.T) {
 					if round.CourseName != "Practice" || len(round.Holes) != 1 || round.Holes[0].Strokes != 4 {
 						t.Errorf("unexpected saved round: %+v", round)
 					}
-					return tt.storeErr
+					return 42, tt.storeErr
 				}))
 			}
 			response := httptest.NewRecorder()
 			NewRouter(service).ServeHTTP(response, request)
 			if response.Code != tt.status {
 				t.Fatalf("status = %d, want %d; body = %s", response.Code, tt.status, response.Body.String())
+			}
+			if response.Code == http.StatusCreated {
+				var body struct {
+					ID int64 `json:"id"`
+				}
+				if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+					t.Fatal(err)
+				}
+				if body.ID != 42 {
+					t.Fatalf("response ID = %d, want database ID 42", body.ID)
+				}
 			}
 			if calls != tt.wantCalls {
 				t.Errorf("storage calls = %d, want %d", calls, tt.wantCalls)
@@ -228,8 +239,8 @@ func TestRoundTotalRelativeScores(t *testing.T) {
 
 type getRoundStoreFunc func(context.Context, int64) (rounds.Round, error)
 
-func (f getRoundStoreFunc) SaveRound(context.Context, rounds.Round) error {
-	return errors.New("unexpected SaveRound call")
+func (f getRoundStoreFunc) SaveRound(context.Context, rounds.Round) (int64, error) {
+	return 0, errors.New("unexpected SaveRound call")
 }
 
 func (f getRoundStoreFunc) GetRound(ctx context.Context, id int64) (rounds.Round, error) {

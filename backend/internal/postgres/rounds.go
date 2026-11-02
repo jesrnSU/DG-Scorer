@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
-	"errors"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -27,26 +27,26 @@ func (r *RoundRepository) SaveRound(
 ) (int64, error) {
 	date, err := time.Parse("2006-01-02", round.Date)
 	if err != nil {
-		return fmt.Errorf("parse round date: %w", err)
+		return 0, fmt.Errorf("parse round date: %w", err)
 	}
 
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("begin transaction: %w", err)
+		return 0, fmt.Errorf("begin transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
 	roundID, err := r.insertRound(ctx, tx, round.CourseName, date)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if err := r.insertHoleScores(ctx, tx, roundID, round.Holes); err != nil {
-		return err
+		return 0, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("commit round: %w", err)
+		return 0, fmt.Errorf("commit round: %w", err)
 	}
 
 	return roundID, nil
@@ -143,4 +143,3 @@ func (r *RoundRepository) insertHoleScores(
 
 	return nil
 }
-

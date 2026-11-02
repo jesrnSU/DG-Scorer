@@ -43,7 +43,7 @@ export async function checkAPI(): Promise<string> {
 
 export async function saveRound(
   round: RoundInput
-): Promise<{ message: string }> {
+): Promise<{ id: number; message: string }> {
   const response = await fetch(`${API_BASE_URL}/api/v1/rounds`, {
     method: 'POST',
     headers: {
@@ -52,7 +52,7 @@ export async function saveRound(
     body: JSON.stringify(round),
   });
 
-  return readResponse<{ message: string }>(response);
+  return readResponse<{ id: number; message: string }>(response);
 }
 
 export async function getRound(id: number): Promise<Round> {
