@@ -49,7 +49,7 @@ func (r *RoundRepository) SaveRound(
 		return fmt.Errorf("commit round: %w", err)
 	}
 
-	return roundId, nil
+	return roundID, nil
 }
 
 func (r *RoundRepository) GetRound(
