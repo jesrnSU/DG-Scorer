@@ -13,28 +13,41 @@ import ConfettiButton from '../components/confettiButton.astro';
     <ConfettiButton></ConfettiButton>
     <button id="api-button" type="button"> Check API </button>
     <p id="api-result" role="status"></p>
+    <button id="test-save" type="button">Test saving a round</button>
+    <pre id="save-result"></pre>
   </main>
 </Layout>
 
 <script>
-  import { checkAPI } from '../lib/api'
+import { checkAPI, saveRound } from '../lib/api';
 
-  const button = document.querySelector<HTMLButtonElement>('#api-button');
-  const result = document.querySelector<HTMLParagraphElement>('#api-result');
+const saveButton =
+  document.querySelector<HTMLButtonElement>('#test-save');
+const saveResult =
+  document.querySelector<HTMLPreElement>('#save-result');
 
-  if (button && result) {
-    button.addEventListener('click', async () => {
-      button.disabled = true;
-      result.textContent = 'Checking…';
+if (saveButton && saveResult) {
+  saveButton.addEventListener('click', async () => {
+    saveButton.disabled = true;
+    saveResult.textContent = 'Saving…';
 
-      try {
-        result.textContent = await checkAPI();
-      } catch (error) {
-        result.textContent =
-          error instanceof Error ? error.message : 'Could not reach the API.';
-      } finally {
-        button.disabled = false;
-      }
-    });
-  }
+    try {
+      const response = await saveRound({
+        course_name: 'Browser test course',
+        date: '2026-11-02',
+        holes: [
+          { hole_number: 1, par: 3, strokes: 4 },
+          { hole_number: 2, par: 3, strokes: 3 },
+        ],
+      });
+
+      saveResult.textContent = JSON.stringify(response, null, 2);
+    } catch (error) {
+      saveResult.textContent =
+        error instanceof Error ? error.message : 'Request failed';
+    } finally {
+      saveButton.disabled = false;
+    }
+  });
+}
 </script>
