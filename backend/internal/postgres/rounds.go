@@ -24,7 +24,7 @@ func NewRoundRepository(pool *pgxpool.Pool) *RoundRepository {
 func (r *RoundRepository) SaveRound(
 	ctx context.Context,
 	round rounds.Round,
-) error {
+) (int64, error) {
 	date, err := time.Parse("2006-01-02", round.Date)
 	if err != nil {
 		return fmt.Errorf("parse round date: %w", err)
@@ -49,7 +49,7 @@ func (r *RoundRepository) SaveRound(
 		return fmt.Errorf("commit round: %w", err)
 	}
 
-	return nil
+	return roundId, nil
 }
 
 func (r *RoundRepository) GetRound(
