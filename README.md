@@ -31,7 +31,3 @@ The project also provides a practical setting for learning containers and virtua
 The backend separates HTTP handling, scoring and validation rules, and database access. A storage interface connects the application service to PostgreSQL, keeping application logic independent of the database implementation. Transactional writes keep each round and its hole scores together.
 
 Automated tests cover scoring, validation, save-service behavior, and HTTP handling. CI checks Go formatting, runs backend tests and static analysis, and builds the frontend.
-
-## Planned development
-
-The next steps are round retrieval and database integration tests, followed by browser score entry and round history. The smartwatch client and offline synchronization will build on that foundation, with analytics, authentication, and hosted deployment to follow.
