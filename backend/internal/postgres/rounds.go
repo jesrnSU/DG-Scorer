@@ -104,6 +104,13 @@ func (r *RoundRepository) GetRound(
 	return round, nil
 }
 
+func (r *RoundRepository) GetUserRounds(
+	ctx context.Context,
+	username string,
+) ([]rounds.Round, error) {
+	
+}
+
 func (r *RoundRepository) insertRound(
 	ctx context.Context,
 	tx pgx.Tx,

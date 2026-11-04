@@ -45,6 +45,28 @@ func getUserRound(service *rounds.Service) gin.HandlerFunc {
 	}
 }
 
+func getAllRoundsFromUser(service *rounds.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if service == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "round storage is unavailable"})
+			return
+		}
+
+		rounds, err := service.GetUserRounds(c.Request.Context(), c.Param("username"))
+		if errors.Is(err, rounds.UsernameNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "username not found"})
+			return
+		}
+
+		if err != nil {
+			_ = c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get rounds"})
+			return
+		}
+		c.JSON(http.StatusOK, rounds)
+	}
+}
+
 func saveUserRound(service *rounds.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if service == nil {
