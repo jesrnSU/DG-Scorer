@@ -1,0 +1,30 @@
+<form id="view-rounds">
+  <label>
+    View Rounds
+  </label>
+  <button id="view-button" type="submit">Fetch</button>
+  <pre id="round-info" role="status"></pre>
+</form>
+
+<script>
+  import { getRound } from '../lib/api';
+
+  const form = document.querySelector<HTMLFormElement>('#view-rounds')!;
+  const button = form.querySelector<HTMLButtonElement>('#view-button')!;
+  const info = form.querySelector<HTMLPreElement>('#round-info')!;
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    button.disabled = true;
+    info.textContent = 'Loading…';
+
+    try {
+      const round = await getRound(2);
+      info.textContent = JSON.stringify(round, null, 2);
+    } catch (error) {
+      info.textContent = error instanceof Error ? error.message : 'Could not fetch round.';
+    } finally {
+      button.disabled = false;
+    }
+  });
+</script>
