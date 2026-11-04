@@ -1,65 +1,37 @@
-<form data-round-upload>
+<form id="round-upload">
   <label>
     Round CSV file
     <input name="file" type="file" accept=".csv,text/csv" required />
   </label>
-  <p>Upload a scorecard CSV </p>
-  <p><a href={`${import.meta.env.BASE_URL}examples/rounds.csv`} download>Download example CSV</a></p>
-  <button type="submit">Import rounds</button>
-  <p data-upload-status role="status" aria-live="polite"></p>
-  <ul data-upload-results></ul>
+  <button type="submit">Upload</button>
+  <p role="status"></p>
 </form>
 
 <script>
   import { saveRound } from '../lib/api';
   import { parseRoundCsv } from '../lib/roundCsv';
 
-  document.querySelectorAll<HTMLFormElement>('[data-round-upload]').forEach(form => {
-    const input = form.querySelector<HTMLInputElement>('input')!;
-    const button = form.querySelector<HTMLButtonElement>('button')!;
-    const status = form.querySelector<HTMLParagraphElement>('[data-upload-status]')!;
-    const results = form.querySelector<HTMLUListElement>('[data-upload-results]')!;
-    let importing = false;
+  const form = document.querySelector<HTMLFormElement>('#round-upload')!;
+  const input = form.querySelector<HTMLInputElement>('input')!;
+  const button = form.querySelector<HTMLButtonElement>('button')!;
+  const status = form.querySelector<HTMLParagraphElement>('[role="status"]')!;
 
-    input.addEventListener('change', () => {
-      status.textContent = '';
-      results.replaceChildren();
-    });
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const file = input.files?.[0];
+    if (!file || button.disabled) return;
 
-    form.addEventListener('submit', async event => {
-      event.preventDefault();
-      if (importing) return;
-      const file = input.files?.[0];
-      if (!file) { status.textContent = 'Choose a CSV file first.'; return; }
-      importing = true;
-      input.disabled = true;
-      button.disabled = true;
-      results.replaceChildren();
-      let savedCount = 0;
-      try {
-        status.textContent = 'Reading and checking CSV…';
-        // Validate the entire file before sending any requests.
-        const rounds = parseRoundCsv(await file.text());
-        for (const [index, round] of rounds.entries()) {
-          status.textContent = `Saving round ${index + 1} of ${rounds.length}…`;
-          const saved = await saveRound(round);
-          savedCount++;
-          const result = document.createElement('li');
-          result.textContent = `${round.course_name} (${round.date}): saved as round ${saved.id}`;
-          results.append(result);
-        }
-        status.textContent = `Imported ${savedCount} round${savedCount === 1 ? '' : 's'}.`;
-        form.reset();
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Import failed.';
-        status.textContent = savedCount > 0
-          ? `${message} Stopped after ${savedCount} saved round(s), listed below. Remove those rounds from the CSV before retrying to avoid duplicates.`
-          : `Import failed: ${message}`;
-      } finally {
-        importing = false;
-        input.disabled = false;
-        button.disabled = false;
-      }
-    });
+    button.disabled = true;
+    status.textContent = 'Uploading…';
+    try {
+      const round = parseRoundCsv(await file.text());
+      const saved = await saveRound(round);
+      status.textContent = `Round saved. ID: ${saved.id}`;
+      form.reset();
+    } catch (error) {
+      status.textContent = error instanceof Error ? error.message : 'Upload failed.';
+    } finally {
+      button.disabled = false;
+    }
   });
 </script>
