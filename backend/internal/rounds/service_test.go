@@ -19,9 +19,10 @@ func (f roundStoreFunc) GetRound(context.Context, int64) (Round, error) {
 
 func TestSaveRound(t *testing.T) {
 	round := Round{
+		Username:   "JesperNi",
 		Id:         7, // A supplied ID must not replace the database-generated ID.
 		CourseName: "Visättra",
-		Date:       "2026-10-19",
+		Date:       "2026-10-19T15:42:00+02:00",
 		Holes:      []HoleScore{{HoleNumber: 1, Par: 3, Strokes: 2}},
 	}
 
@@ -82,6 +83,7 @@ func TestSaveRound(t *testing.T) {
 // A domain test runs the calculation without starting HTTP or PostgreSQL.
 func TestTotalStrokes(t *testing.T) {
 	round := Round{
+		Username:   "JesperNi",
 		CourseName: "Visättra",
 		Holes: []HoleScore{
 			{HoleNumber: 1, Par: 3, Strokes: 2},
@@ -95,6 +97,7 @@ func TestTotalStrokes(t *testing.T) {
 
 func TestTotalPar(t *testing.T) {
 	round := Round{
+		Username:   "JesperNi",
 		CourseName: "Rudan",
 		Holes: []HoleScore{
 			{HoleNumber: 1, Par: 4, Strokes: 3},
@@ -108,6 +111,7 @@ func TestTotalPar(t *testing.T) {
 
 func TestRoundEvenPar(t *testing.T) {
 	round := Round{
+		Username:   "JesperNi",
 		CourseName: "Visättra",
 		Holes: []HoleScore{
 			{HoleNumber: 1, Par: 3, Strokes: 2},
@@ -121,6 +125,7 @@ func TestRoundEvenPar(t *testing.T) {
 
 func TestRoundUnderPar(t *testing.T) {
 	round := Round{
+		Username:   "JesperNi",
 		CourseName: "Visättra",
 		Holes: []HoleScore{
 			{HoleNumber: 1, Par: 3, Strokes: 2},
@@ -134,6 +139,7 @@ func TestRoundUnderPar(t *testing.T) {
 
 func TestRoundOverPar(t *testing.T) {
 	round := Round{
+		Username:   "JesperNi",
 		CourseName: "Visättra",
 		Holes: []HoleScore{
 			{HoleNumber: 1, Par: 3, Strokes: 4},

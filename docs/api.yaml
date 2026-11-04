@@ -89,16 +89,20 @@ components:
     Round:
       type: object
       description: Completed round. Hole numbers must be unique; validation returns the first error.
-      required: [course_name, date, holes]
+      required: [username, course_name, date, holes]
       properties:
+        username:
+          type: string
+          minLength: 1
+          description: Player name; must contain non-whitespace text.
         course_name:
           type: string
           minLength: 1
           description: Must contain non-whitespace text.
         date:
           type: string
-          format: date
-          description: Valid calendar date in YYYY-MM-DD format.
+          format: date-time
+          description: RFC 3339 timestamp with timezone, for example 2026-10-10T15:42:00+02:00. Responses may use UTC for the same instant.
         holes:
           type: array
           minItems: 1

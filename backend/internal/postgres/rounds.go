@@ -25,7 +25,7 @@ func (r *RoundRepository) SaveRound(
 	ctx context.Context,
 	round rounds.Round,
 ) (int64, error) {
-	date, err := time.Parse("2006-01-02", round.Date)
+	date, err := time.Parse(time.RFC3339Nano, round.Date)
 	if err != nil {
 		return 0, fmt.Errorf("parse round date: %w", err)
 	}
@@ -36,7 +36,7 @@ func (r *RoundRepository) SaveRound(
 	}
 	defer tx.Rollback(ctx)
 
-	roundID, err := r.insertRound(ctx, tx, round.CourseName, date)
+	roundID, err := r.insertRound(ctx, tx, round.Username, round.CourseName, date)
 	if err != nil {
 		return 0, err
 	}
@@ -60,10 +60,10 @@ func (r *RoundRepository) GetRound(
 	var date time.Time
 
 	err := r.pool.QueryRow(ctx, `
-		SELECT id, course_name, date
+		SELECT id, username, course_name, date
 		FROM rounds
 		WHERE id = $1
-	`, id).Scan(&round.Id, &round.CourseName, &date)
+	`, id).Scan(&round.Id, &round.Username, &round.CourseName, &date)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return rounds.Round{}, rounds.ErrRoundNotFound
 	}
@@ -71,7 +71,7 @@ func (r *RoundRepository) GetRound(
 		return rounds.Round{}, fmt.Errorf("get round: %w", err)
 	}
 
-	round.Date = date.Format("2006-01-02")
+	round.Date = date.UTC().Format(time.RFC3339Nano)
 	round.Holes = make([]rounds.HoleScore, 0)
 
 	rows, err := r.pool.Query(ctx, `
@@ -107,16 +107,17 @@ func (r *RoundRepository) GetRound(
 func (r *RoundRepository) insertRound(
 	ctx context.Context,
 	tx pgx.Tx,
+	username string,
 	courseName string,
 	date time.Time,
 ) (int64, error) {
 	var roundID int64
 
 	err := tx.QueryRow(ctx, `
-		INSERT INTO rounds (course_name, date)
-		VALUES ($1, $2)
+		INSERT INTO rounds (username, course_name, date)
+		VALUES ($1, $2, $3)
 		RETURNING id
-	`, courseName, date).Scan(&roundID)
+	`, username, courseName, date).Scan(&roundID)
 	if err != nil {
 		return 0, fmt.Errorf("insert round: %w", err)
 	}

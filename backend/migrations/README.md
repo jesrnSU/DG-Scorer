@@ -1,10 +1,16 @@
 # Database migrations
 
-Place versioned schema changes here after defining your first data model.
-No schema or migration runner has been selected or implemented.
+Run migrations explicitly in order. There is no automatic migration runner.
 
-Choose a migration tool and follow its file naming convention. Document its apply
-and rollback commands in the root README. Run migrations explicitly; keep them
-out of HTTP handlers.
+For a new database, from the project root:
 
-The telemetry prototype creates its own table. It is not a migration for the new API.
+```sh
+docker compose exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < backend/migrations/001_create_rounds.sql
+docker compose exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 < backend/migrations/002_round_username_timestamp.sql
+```
+
+If tables already exist, run only migration 002 once. It adds username and changes
+date to TIMESTAMPTZ without removing rounds or hole scores. Existing rounds get
+username `unknown` and midnight UTC because their original names and times were
+not stored. New API requests require a username and RFC 3339 timestamp with timezone.
+Timestamps are returned in UTC, preserving the instant from the CSV offset.

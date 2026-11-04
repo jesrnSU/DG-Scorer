@@ -43,11 +43,14 @@ func (s *Service) GetRound(ctx context.Context, id int64) (Round, error) {
 }
 
 func ValidateRound(round Round) error {
+	if strings.TrimSpace(round.Username) == "" {
+		return fmt.Errorf("username is required")
+	}
 	if strings.TrimSpace(round.CourseName) == "" {
 		return fmt.Errorf("course_name is required")
 	}
-	if _, err := time.Parse("2006-01-02", round.Date); err != nil {
-		return fmt.Errorf("date must be a valid date in YYYY-MM-DD format")
+	if _, err := time.Parse(time.RFC3339Nano, round.Date); err != nil {
+		return fmt.Errorf("date must be a valid RFC 3339 timestamp with a timezone")
 	}
 	if len(round.Holes) == 0 {
 		return fmt.Errorf("round must contain at least one hole")

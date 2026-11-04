@@ -19,7 +19,7 @@
     info.textContent = 'Loading…';
 
     try {
-      const round = await getRound(2);
+      const round = await getRound(7);
       info.textContent = JSON.stringify(round, null, 2);
     } catch (error) {
       info.textContent = error instanceof Error ? error.message : 'Could not fetch round.';

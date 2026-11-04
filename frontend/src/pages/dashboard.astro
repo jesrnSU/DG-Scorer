@@ -42,8 +42,9 @@ if (saveButton && saveResult) {
 
     try {
       const response = await saveRound({
+        username: 'JesperNi',
         course_name: 'Browser test course',
-        date: '2026-11-02',
+        date: '2026-11-02T15:42:00+01:00',
         holes: [
           { hole_number: 1, par: 3, strokes: 4 },
           { hole_number: 2, par: 3, strokes: 3 },

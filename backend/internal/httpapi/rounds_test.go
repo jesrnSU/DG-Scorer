@@ -25,7 +25,7 @@ func (f roundStoreFunc) GetRound(context.Context, int64) (rounds.Round, error) {
 }
 
 func TestSaveRoundEndpoint(t *testing.T) {
-	const valid = `{"course_name":"Practice","date":"2026-10-20","holes":[{"hole_number":1,"par":3,"strokes":4}]}`
+	const valid = `{"username":"JesperNi","course_name":"Practice","date":"2026-10-20T15:42:00+02:00","holes":[{"hole_number":1,"par":3,"strokes":4}]}`
 	for _, tt := range []struct {
 		name        string
 		payload     string
@@ -182,7 +182,7 @@ func TestScoringEndpointsRejectInvalidRound(t *testing.T) {
 	for _, path := range []string{"/api/v1/rounds/total", "/api/v1/rounds/course_par"} {
 		t.Run(path, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, path, strings.NewReader(
-				`{"course_name":"Practice","date":"2026-10-16","holes":[{"hole_number":1,"par":3,"strokes":-1}]}`))
+				`{"username":"JesperNi","course_name":"Practice","date":"2026-10-16T15:42:00+02:00","holes":[{"hole_number":1,"par":3,"strokes":-1}]}`))
 			request.Header.Set("Content-Type", "application/json")
 			response := httptest.NewRecorder()
 			NewRouter(nil).ServeHTTP(response, request)
@@ -211,7 +211,7 @@ func TestRoundTotalRelativeScores(t *testing.T) {
 	}{{"even", 3, 0}, {"under", 2, -1}} {
 		t.Run(tt.name, func(t *testing.T) {
 			payload, err := json.Marshal(map[string]any{
-				"course_name": "Practice", "date": "2026-10-16",
+				"username": "JesperNi", "course_name": "Practice", "date": "2026-10-16T15:42:00+02:00",
 				"holes": []map[string]int{{"hole_number": 1, "par": 3, "strokes": tt.strokes}},
 			})
 			if err != nil {
@@ -249,7 +249,8 @@ func (f getRoundStoreFunc) GetRound(ctx context.Context, id int64) (rounds.Round
 
 func TestGetRoundEndpoint(t *testing.T) {
 	want := rounds.Round{
-		Id: 42, CourseName: "Practice", Date: "2026-10-29",
+		Username: "JesperNi",
+		Id:       42, CourseName: "Practice", Date: "2026-10-29T15:42:00+02:00",
 		Holes: []rounds.HoleScore{{HoleNumber: 1, Par: 3, Strokes: 4}},
 	}
 	for _, tt := range []struct {

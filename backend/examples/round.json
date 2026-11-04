@@ -1,7 +1,7 @@
 [
   {
     "course_name": "Visättra",
-    "date": "2026-10-18",
+    "date": "2026-10-18T15:42:00+02:00",
     "holes": [
       {
         "hole_number": 1,
@@ -93,11 +93,12 @@
         "par": 4,
         "strokes": 4
       }
-    ]
+    ],
+    "username": "JesperNi"
   },
   {
     "course_name": "Rudan",
-    "date": "2026-10-19",
+    "date": "2026-10-19T15:42:00+02:00",
     "holes": [
       {
         "hole_number": 1,
@@ -189,6 +190,7 @@
         "par": 4,
         "strokes": 4
       }
-    ]
+    ],
+    "username": "JesperNi"
   }
 ]

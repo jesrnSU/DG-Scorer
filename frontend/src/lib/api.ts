@@ -10,8 +10,9 @@ export interface HoleScore {
 
 // Data the browser sends when creating a round.
 export interface RoundInput {
+  username: string;
   course_name: string;
-  date: string;
+  date: string; // RFC 3339 timestamp including timezone.
   holes: HoleScore[];
 }
 
