@@ -60,3 +60,9 @@ export async function getRound(id: number): Promise<Round> {
   const response = await fetch(`${API_BASE_URL}/api/v1/rounds/${id}`);
   return readResponse<Round>(response);
 }
+
+export async function getUserRounds(username: string): Promise<Round[]> {
+  const query = new URLSearchParams({ username });
+  const response = await fetch(`${API_BASE_URL}/api/v1/rounds?${query}`);
+  return readResponse<Round[]>(response);
+}

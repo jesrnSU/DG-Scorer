@@ -4,6 +4,36 @@ info:
   version: 0.1.0
   description: Learning example. Calculates totals with completed-round validation and without persistence.
 paths:
+  /api/v1/rounds:
+    get:
+      summary: Get all rounds and hole scores for a username, newest first
+      parameters:
+        - in: query
+          name: username
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Matching rounds with hole scores ordered by hole number. Empty array when none match.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/Round'
+                    - type: object
+                      properties:
+                        id:
+                          type: integer
+                          format: int64
+        '400':
+          description: Username is missing or blank.
+        '500':
+          description: Could not retrieve rounds.
+        '503':
+          description: Round storage is unavailable.
   /healthz:
     get:
       responses:

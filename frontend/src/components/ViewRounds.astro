@@ -1,15 +1,17 @@
 <form id="view-rounds">
   <label>
-    View Rounds
+    Username
+    <input name="username" type="text" required />
   </label>
   <button id="view-button" type="submit">Fetch</button>
   <pre id="round-info" role="status"></pre>
 </form>
 
 <script>
-  import { getRound } from '../lib/api';
+  import { getUserRounds } from '../lib/api';
 
   const form = document.querySelector<HTMLFormElement>('#view-rounds')!;
+  const username = form.querySelector<HTMLInputElement>('input')!;
   const button = form.querySelector<HTMLButtonElement>('#view-button')!;
   const info = form.querySelector<HTMLPreElement>('#round-info')!;
 
@@ -19,8 +21,8 @@
     info.textContent = 'Loading…';
 
     try {
-      const round = await getRound(7);
-      info.textContent = JSON.stringify(round, null, 2);
+      const rounds = await getUserRounds(username.value);
+      info.textContent = rounds.length ? JSON.stringify(rounds, null, 2) : 'No rounds found.';
     } catch (error) {
       info.textContent = error instanceof Error ? error.message : 'Could not fetch round.';
     } finally {

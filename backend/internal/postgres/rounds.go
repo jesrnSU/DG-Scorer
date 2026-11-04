@@ -108,7 +108,47 @@ func (r *RoundRepository) GetUserRounds(
 	ctx context.Context,
 	username string,
 ) ([]rounds.Round, error) {
-	
+	rows, err := r.pool.Query(ctx, `
+        SELECT r.id, r.username, r.course_name, r.date,
+               h.hole_number, h.par, h.strokes
+        FROM rounds r
+        LEFT JOIN hole_scores h ON h.round_id = r.id
+        WHERE r.username = $1
+        ORDER BY r.date DESC, r.id DESC, h.hole_number
+    `, username)
+	if err != nil {
+		return nil, fmt.Errorf("get user rounds: %w", err)
+	}
+	defer rows.Close()
+
+	userRounds := make([]rounds.Round, 0)
+	for rows.Next() {
+		var round rounds.Round
+		var date time.Time
+		var holeNumber, par, strokes *int
+		if err := rows.Scan(&round.Id, &round.Username, &round.CourseName, &date,
+			&holeNumber, &par, &strokes); err != nil {
+			return nil, fmt.Errorf("scan user round: %w", err)
+		}
+
+		// Joined rows repeat the round fields for each hole.
+		last := len(userRounds) - 1
+		if last < 0 || userRounds[last].Id != round.Id {
+			round.Date = date.UTC().Format(time.RFC3339Nano)
+			round.Holes = make([]rounds.HoleScore, 0)
+			userRounds = append(userRounds, round)
+			last++
+		}
+		if holeNumber != nil {
+			userRounds[last].Holes = append(userRounds[last].Holes, rounds.HoleScore{
+				HoleNumber: *holeNumber, Par: *par, Strokes: *strokes,
+			})
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read user rounds: %w", err)
+	}
+	return userRounds, nil
 }
 
 func (r *RoundRepository) insertRound(

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jesrnsu/jesrnsu.github.io/internal/rounds"
@@ -45,25 +46,24 @@ func getUserRound(service *rounds.Service) gin.HandlerFunc {
 	}
 }
 
-func getAllRoundsFromUser(service *rounds.Service) gin.HandlerFunc {
+func getUserRounds(service *rounds.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		username := c.Query("username")
+		if strings.TrimSpace(username) == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "username is required"})
+			return
+		}
 		if service == nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "round storage is unavailable"})
 			return
 		}
-
-		rounds, err := service.GetUserRounds(c.Request.Context(), c.Param("username"))
-		if errors.Is(err, rounds.UsernameNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "username not found"})
-			return
-		}
-
+		userRounds, err := service.GetUserRounds(c.Request.Context(), username)
 		if err != nil {
 			_ = c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get rounds"})
 			return
 		}
-		c.JSON(http.StatusOK, rounds)
+		c.JSON(http.StatusOK, userRounds)
 	}
 }
 

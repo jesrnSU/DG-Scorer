@@ -30,4 +30,4 @@ The project also provides a practical setting for learning containers and virtua
 
 The backend separates HTTP handling, scoring and validation rules, and database access. A storage interface connects the application service to PostgreSQL, keeping application logic independent of the database implementation. Transactional writes keep each round and its hole scores together.
 
-Automated tests cover scoring, validation, save-service behavior, and HTTP handling. CI checks Go formatting, runs backend tests and static analysis, and builds the frontend.
+CI checks Go formatting, builds the backend and frontend, and runs Go static analysis. Automated tests are not currently included.
