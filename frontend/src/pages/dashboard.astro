@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import ConfettiButton from '../components/confettiButton.astro';
+import FileUpload from '../components/FileUpload.astro';
 
 ---
 
@@ -8,11 +8,16 @@ import ConfettiButton from '../components/confettiButton.astro';
   <main>
     <h1>Disc golf statistics dashboard</h1>
     <p>Work in progress.</p>
-    <ConfettiButton></ConfettiButton>
     <button id="api-button" type="button"> Check API </button>
     <p id="api-result" role="status"></p>
     <button id="test-save" type="button">Test saving a round</button>
     <pre id="save-result"></pre>
+
+    <section>
+      <h1>Upload Round</h1>
+      <FileUpload />
+    </section>
+
   </main>
 </Layout>
 
