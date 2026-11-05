@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -108,6 +109,8 @@ func (r *RoundRepository) GetUserRounds(
 	ctx context.Context,
 	username string,
 ) ([]rounds.Round, error) {
+	var usernameLowercase := strings.toLower(username)
+
 	rows, err := r.pool.Query(ctx, `
         SELECT r.id, r.username, r.course_name, r.date,
                h.hole_number, h.par, h.strokes
@@ -115,7 +118,7 @@ func (r *RoundRepository) GetUserRounds(
         LEFT JOIN hole_scores h ON h.round_id = r.id
         WHERE r.username = $1
         ORDER BY r.date DESC, r.id DESC, h.hole_number
-    `, username)
+    `, usernameLowercase)
 	if err != nil {
 		return nil, fmt.Errorf("get user rounds: %w", err)
 	}
@@ -159,12 +162,14 @@ func (r *RoundRepository) insertRound(
 	date time.Time,
 ) (int64, error) {
 	var roundID int64
+	var usernameLowercase := strings.toLower(username)
+	var courseNameLowercase := strings.toLower(courseName)
 
 	err := tx.QueryRow(ctx, `
 		INSERT INTO rounds (username, course_name, date)
 		VALUES ($1, $2, $3)
 		RETURNING id
-	`, username, courseName, date).Scan(&roundID)
+	`, usernameLowercase, courseNameLowercase, date).Scan(&roundID)
 	if err != nil {
 		return 0, fmt.Errorf("insert round: %w", err)
 	}
