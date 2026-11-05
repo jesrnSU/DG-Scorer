@@ -9,7 +9,6 @@ import (
 
 type RoundStore interface {
 	SaveRound(ctx context.Context, round Round) (int64, error)
-	GetRound(ctx context.Context, id int64) (Round, error)
 	GetUserRounds(ctx context.Context, username string) ([]Round, error)
 }
 
@@ -32,15 +31,6 @@ func (s *Service) SaveRound(ctx context.Context, round Round) (int64, error) {
 	}
 
 	return id, nil
-}
-
-func (s *Service) GetRound(ctx context.Context, id int64) (Round, error) {
-	round, err := s.store.GetRound(ctx, id)
-	if err != nil {
-		return Round{}, fmt.Errorf("get round: %w", err)
-	}
-
-	return round, nil
 }
 
 func (s *Service) GetUserRounds(ctx context.Context, username string) ([]Round, error) {

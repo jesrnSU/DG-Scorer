@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 	"strings"
@@ -53,63 +52,11 @@ func (r *RoundRepository) SaveRound(
 	return roundID, nil
 }
 
-func (r *RoundRepository) GetRound(
-	ctx context.Context,
-	id int64,
-) (rounds.Round, error) {
-	var round rounds.Round
-	var date time.Time
-
-	err := r.pool.QueryRow(ctx, `
-		SELECT id, username, course_name, date
-		FROM rounds
-		WHERE id = $1
-	`, id).Scan(&round.Id, &round.Username, &round.CourseName, &date)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return rounds.Round{}, rounds.ErrRoundNotFound
-	}
-	if err != nil {
-		return rounds.Round{}, fmt.Errorf("get round: %w", err)
-	}
-
-	round.Date = date.UTC().Format(time.RFC3339Nano)
-	round.Holes = make([]rounds.HoleScore, 0)
-
-	rows, err := r.pool.Query(ctx, `
-		SELECT hole_number, par, strokes
-		FROM hole_scores
-		WHERE round_id = $1
-		ORDER BY hole_number
-	`, id)
-	if err != nil {
-		return rounds.Round{}, fmt.Errorf("get hole scores: %w", err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var hole rounds.HoleScore
-		if err := rows.Scan(
-			&hole.HoleNumber,
-			&hole.Par,
-			&hole.Strokes,
-		); err != nil {
-			return rounds.Round{}, fmt.Errorf("scan hole score: %w", err)
-		}
-
-		round.Holes = append(round.Holes, hole)
-	}
-	if err := rows.Err(); err != nil {
-		return rounds.Round{}, fmt.Errorf("read hole scores: %w", err)
-	}
-
-	return round, nil
-}
-
 func (r *RoundRepository) GetUserRounds(
 	ctx context.Context,
 	username string,
 ) ([]rounds.Round, error) {
-	var usernameLowercase := strings.toLower(username)
+	var usernameLowercase = strings.ToLower(username)
 
 	rows, err := r.pool.Query(ctx, `
         SELECT r.id, r.username, r.course_name, r.date,
@@ -162,8 +109,8 @@ func (r *RoundRepository) insertRound(
 	date time.Time,
 ) (int64, error) {
 	var roundID int64
-	var usernameLowercase := strings.toLower(username)
-	var courseNameLowercase := strings.toLower(courseName)
+	var usernameLowercase = strings.ToLower(username)
+	var courseNameLowercase = strings.ToLower(courseName)
 
 	err := tx.QueryRow(ctx, `
 		INSERT INTO rounds (username, course_name, date)

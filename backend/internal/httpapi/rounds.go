@@ -1,9 +1,7 @@
 package httpapi
 
 import (
-	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -18,32 +16,6 @@ type roundTotalResponse struct {
 
 type roundParResponse struct {
 	TotalPar int `json:"total_par"`
-}
-
-func getUserRound(service *rounds.Service) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-		if err != nil || id <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "round id must be a positive integer"})
-			return
-		}
-		if service == nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "round storage is unavailable"})
-			return
-		}
-
-		round, err := service.GetRound(c.Request.Context(), id)
-		if errors.Is(err, rounds.ErrRoundNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "round not found"})
-			return
-		}
-		if err != nil {
-			_ = c.Error(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get round"})
-			return
-		}
-		c.JSON(http.StatusOK, round)
-	}
 }
 
 func getUserRounds(service *rounds.Service) gin.HandlerFunc {
