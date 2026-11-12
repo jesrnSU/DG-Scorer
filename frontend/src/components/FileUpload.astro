@@ -3,7 +3,7 @@
     Round CSV file
     <input name="file" type="file" accept=".csv,text/csv" required />
   </label>
-  <button type="submit">Upload</button>
+  <button type="submit" disabled>Upload</button>
   <p role="status"></p>
 </form>
 
@@ -15,13 +15,22 @@
   const input = form.querySelector<HTMLInputElement>('input')!;
   const button = form.querySelector<HTMLButtonElement>('button')!;
   const status = form.querySelector<HTMLParagraphElement>('[role="status"]')!;
+  let uploading = false;
+
+  function updateUploadButton() {
+    button.disabled = uploading || !input.files?.length;
+  }
+
+  input.addEventListener('change', updateUploadButton);
+  updateUploadButton();
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
     const file = input.files?.[0];
     if (!file || button.disabled) return;
 
-    button.disabled = true;
+    uploading = true;
+    updateUploadButton();
     status.textContent = 'Uploading…';
     try {
       const round = parseRoundCsv(await file.text());
@@ -31,7 +40,8 @@
     } catch (error) {
       status.textContent = error instanceof Error ? error.message : 'Upload failed.';
     } finally {
-      button.disabled = false;
+      uploading = false;
+      updateUploadButton();
     }
   });
 </script>
