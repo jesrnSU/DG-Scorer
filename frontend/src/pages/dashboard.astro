@@ -20,18 +20,37 @@ import ViewUsers from '../components/ViewUsers.astro';
       <FileUpload />
     </section>
 
-    <section>
-      <h1>View Round</h1>
-      <ViewRounds />
-    </section>
-
-    <section>
-      <h1>View Users</h1>
-      <ViewUsers />
-    </section>
+    <div class="split-container">
+      <div class="box">View Rounds
+        <section>
+          <ViewRounds />
+        </section>
+      </div>
+      <div class="box">View Users
+        <section>
+          <ViewUsers />
+        </section>
+      </div>
+    </div>
 
   </main>
 </Layout>
+
+<style>
+  .split-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .box {
+    box-sizing: border-box;
+    padding: 1.5rem;
+    background-color: #f0f4f8;
+    border: 1px solid #cbd5e1;
+  }
+</style>
 
 <script>
 import { checkAPI, saveRound } from '../lib/api';
