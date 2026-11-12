@@ -60,13 +60,13 @@ func (r *RoundRepository) GetUserRounds(
 	var usernameLowercase = strings.ToLower(username)
 
 	rows, err := r.pool.Query(ctx, `
-        SELECT r.id, u.username, r.course_name, r.date,
+        SELECT r.round_id, u.username, r.course_name, r.date,
                h.hole_number, h.par, h.strokes
         FROM rounds r
         JOIN users u ON u.id = r.user_id
-        LEFT JOIN hole_scores h ON h.round_id = r.id
+        LEFT JOIN hole_scores h ON h.round_id = r.round_id
         WHERE LOWER(u.username) = $1
-        ORDER BY r.date DESC, r.id DESC, h.hole_number
+        ORDER BY r.date DESC, r.round_id DESC, h.hole_number
     `, usernameLowercase)
 	if err != nil {
 		return nil, fmt.Errorf("get user rounds: %w", err)
@@ -148,7 +148,7 @@ func (r *RoundRepository) insertRound(
 	err = tx.QueryRow(ctx, `
 		INSERT INTO rounds (user_id, course_name, date)
 		VALUES ($1, $2, $3)
-		RETURNING id
+		RETURNING round_id
 	`, userID, courseNameLowercase, date).Scan(&roundID)
 	if err != nil {
 		return 0, fmt.Errorf("insert round: %w", err)

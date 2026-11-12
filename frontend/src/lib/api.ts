@@ -8,8 +8,14 @@ export interface HoleScore {
   strokes: number;
 }
 
+export interface User {
+  id: number;
+  username: string;
+}
+
 // Data the browser sends when creating a round.
 export interface RoundInput {
+  // Must match an existing user; the backend resolves the user's database ID.
   username: string;
   course_name: string;
   date: string; // RFC 3339 timestamp including timezone.
@@ -65,4 +71,9 @@ export async function getUserRounds(username: string): Promise<Round[]> {
   const query = new URLSearchParams({ username });
   const response = await fetch(`${API_BASE_URL}/api/v1/rounds?${query}`);
   return readResponse<Round[]>(response);
+}
+
+export async function getAllUsers(): Promise<User[]> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/users`);
+  return readResponse<User[]>(response);
 }
