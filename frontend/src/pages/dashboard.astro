@@ -10,23 +10,21 @@ import ViewUsers from '../components/ViewUsers.astro';
   <main>
     <h1>Disc golf statistics dashboard</h1>
     <p>Work in progress.</p>
-    <button id="api-button" type="button"> Check API </button>
-    <p id="api-result" role="status"></p>
-    <button id="test-save" type="button">Test saving a round</button>
-    <pre id="save-result"></pre>
 
     <section>
-      <h1>Upload Round</h1>
+      <h2>Upload Round</h2>
       <FileUpload />
     </section>
 
     <div class="split-container">
-      <div class="box">View Rounds
+      <div class="box">
+        <h2>View Rounds</h2>
         <section>
           <ViewRounds />
         </section>
       </div>
-      <div class="box">View Users
+      <div class="box">
+        <h2>View Users</h2>
         <section>
           <ViewUsers />
         </section>
@@ -53,36 +51,5 @@ import ViewUsers from '../components/ViewUsers.astro';
 </style>
 
 <script>
-import { checkAPI, saveRound } from '../lib/api';
 
-const saveButton =
-  document.querySelector<HTMLButtonElement>('#test-save');
-const saveResult =
-  document.querySelector<HTMLPreElement>('#save-result');
-
-if (saveButton && saveResult) {
-  saveButton.addEventListener('click', async () => {
-    saveButton.disabled = true;
-    saveResult.textContent = 'Saving…';
-
-    try {
-      const response = await saveRound({
-        username: 'JesperNi',
-        course_name: 'Browser test course',
-        date: '2026-11-02T15:42:00+01:00',
-        holes: [
-          { hole_number: 1, par: 3, strokes: 4 },
-          { hole_number: 2, par: 3, strokes: 3 },
-        ],
-      });
-
-      saveResult.textContent = JSON.stringify(response, null, 2);
-    } catch (error) {
-      saveResult.textContent =
-        error instanceof Error ? error.message : 'Request failed';
-    } finally {
-      saveButton.disabled = false;
-    }
-  });
-}
 </script>
