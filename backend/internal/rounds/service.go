@@ -8,6 +8,7 @@ import (
 )
 
 type RoundStore interface {
+	GetAllUsers(ctx context.Context) ([]User, error)
 	SaveRound(ctx context.Context, round Round) (int64, error)
 	GetUserRounds(ctx context.Context, username string) ([]Round, error)
 }
@@ -100,4 +101,12 @@ func ScoreRelativeToPar(round Round) int {
 
 func ConvertToStringDate(round Round) string {
 	return "not implemented"
+}
+
+func (s *Service) GetAllUsers(ctx context.Context) ([]User, error) {
+	users, err := s.store.GetAllUsers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get all users: %w", err)
+	}
+	return users, nil
 }

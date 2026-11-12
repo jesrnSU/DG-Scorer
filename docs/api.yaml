@@ -4,6 +4,22 @@ info:
   version: 0.1.0
   description: Learning example. Calculates totals with completed-round validation and without persistence.
 paths:
+  /api/v1/users:
+    get:
+      summary: Get all users, including users without rounds
+      responses:
+        '200':
+          description: Users ordered by username and ID. Empty array if there are no users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '500':
+          description: Could not retrieve users.
+        '503':
+          description: Storage is unavailable.
   /api/v1/rounds:
     get:
       summary: Get all rounds and hole scores for a username, newest first
@@ -116,6 +132,15 @@ paths:
                     type: string
 components:
   schemas:
+    User:
+      type: object
+      required: [id, username]
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
     Round:
       type: object
       description: Completed round. Hole numbers must be unique; validation returns the first error.
@@ -124,7 +149,7 @@ components:
         username:
           type: string
           minLength: 1
-          description: Player name; must contain non-whitespace text.
+          description: Player name; must contain non-whitespace text. Saving requires an existing user in the users table.
         course_name:
           type: string
           minLength: 1

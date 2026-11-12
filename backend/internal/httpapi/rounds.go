@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -55,12 +56,32 @@ func saveUserRound(service *rounds.Service) gin.HandlerFunc {
 			return
 		}
 		id, err := service.SaveRound(c.Request.Context(), round)
+		if errors.Is(err, rounds.ErrUsernameNotFound) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "username not found"})
+			return
+		}
 		if err != nil {
 			_ = c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save round"})
 			return
 		}
 		c.JSON(http.StatusCreated, gin.H{"id": id, "message": "round saved"})
+	}
+}
+
+func getAllUsers(service *rounds.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if service == nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "round storage is unavailable"})
+			return
+		}
+		users, err := service.GetAllUsers(c.Request.Context())
+		if err != nil {
+			_ = c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get all users"})
+			return
+		}
+		c.JSON(http.StatusOK, users)
 	}
 }
 

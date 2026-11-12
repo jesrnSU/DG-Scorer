@@ -18,3 +18,9 @@ type Round struct {
 }
 
 // ValidateRound checks these fields before HTTP calculations.
+
+// User identifies a player stored in the users table.
+type User struct {
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+}

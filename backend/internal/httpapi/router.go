@@ -26,5 +26,6 @@ func NewRouter(roundService *rounds.Service) *gin.Engine {
 	router.POST("/api/v1/rounds/course_par", calculateCoursePar)
 	router.POST("/api/v1/rounds", saveUserRound(roundService))
 	router.GET("/api/v1/rounds", getUserRounds(roundService))
+	router.GET("/api/v1/users", getAllUsers(roundService))
 	return router
 }

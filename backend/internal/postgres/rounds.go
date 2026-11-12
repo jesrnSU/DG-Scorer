@@ -2,9 +2,10 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"time"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -59,11 +60,12 @@ func (r *RoundRepository) GetUserRounds(
 	var usernameLowercase = strings.ToLower(username)
 
 	rows, err := r.pool.Query(ctx, `
-        SELECT r.id, r.username, r.course_name, r.date,
+        SELECT r.id, u.username, r.course_name, r.date,
                h.hole_number, h.par, h.strokes
         FROM rounds r
+        JOIN users u ON u.id = r.user_id
         LEFT JOIN hole_scores h ON h.round_id = r.id
-        WHERE r.username = $1
+        WHERE LOWER(u.username) = $1
         ORDER BY r.date DESC, r.id DESC, h.hole_number
     `, usernameLowercase)
 	if err != nil {
@@ -101,6 +103,28 @@ func (r *RoundRepository) GetUserRounds(
 	return userRounds, nil
 }
 
+func (r *RoundRepository) GetAllUsers(
+	ctx context.Context,
+) ([]rounds.User, error) {
+	rows, err := r.pool.Query(ctx, `SELECT id, username FROM users ORDER BY username, id`)
+	if err != nil {
+		return nil, fmt.Errorf("get all users: %w", err)
+	}
+	defer rows.Close()
+	users := make([]rounds.User, 0)
+	for rows.Next() {
+		var user rounds.User
+		if err := rows.Scan(&user.ID, &user.Username); err != nil {
+			return nil, fmt.Errorf("scan user: %w", err)
+		}
+		users = append(users, user)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read users: %w", err)
+	}
+	return users, nil
+}
+
 func (r *RoundRepository) insertRound(
 	ctx context.Context,
 	tx pgx.Tx,
@@ -112,11 +136,20 @@ func (r *RoundRepository) insertRound(
 	var usernameLowercase = strings.ToLower(username)
 	var courseNameLowercase = strings.ToLower(courseName)
 
-	err := tx.QueryRow(ctx, `
-		INSERT INTO rounds (username, course_name, date)
+	var userID int64
+	err := tx.QueryRow(ctx, `SELECT id FROM users WHERE LOWER(username) = $1`, usernameLowercase).Scan(&userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, rounds.ErrUsernameNotFound
+	}
+	if err != nil {
+		return 0, fmt.Errorf("find round user: %w", err)
+	}
+
+	err = tx.QueryRow(ctx, `
+		INSERT INTO rounds (user_id, course_name, date)
 		VALUES ($1, $2, $3)
 		RETURNING id
-	`, usernameLowercase, courseNameLowercase, date).Scan(&roundID)
+	`, userID, courseNameLowercase, date).Scan(&roundID)
 	if err != nil {
 		return 0, fmt.Errorf("insert round: %w", err)
 	}

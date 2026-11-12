@@ -10,12 +10,6 @@ I’m building this project to develop practical experience with Go, relational 
 - Keep scores available during offline play and synchronize them when connected.
 - Review previous rounds and performance trends in a web dashboard.
 
-## Current progress
-
-The backend currently validates rounds, calculates total strokes and scores relative to par, and saves rounds and hole scores to PostgreSQL in a single transaction. The Astro dashboard has an initial browser-to-API health check.
-
-The smartwatch application, offline synchronization, round-history interface, and analytics are planned. The watch platform has not been selected yet.
-
 ## Technology and design
 
 | Area | Technologies |
