@@ -8,7 +8,7 @@ I’m building this project to develop practical experience with Go, relational 
 
 - Record hole-by-hole scores directly on a smartwatch.
 - Keep scores available during offline play and synchronize them when connected.
-- Review previous rounds and performance trends in a web dashboard.
+- Review previous rounds and performance trends in a web dashboard
 
 ## Technology and design
 
