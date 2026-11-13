@@ -14,19 +14,26 @@ fun ScorekeeperApp(
     onPrevious: () -> Unit,
 ) {
     when (val screen = state.screen) {
-        RoundScreen.Menu -> MenuScreen(onStart = onStart)
-        is RoundScreen.Hole -> HoleScreen(
-            holeNumber = screen.index + 1,
-            score = state.scores[screen.index],
-            onIncrease = onIncrease,
-            onDecrease = onDecrease,
-            onNext = onNext,
-            onPrevious = onPrevious,
-        )
-        RoundScreen.Summary -> SummaryScreen(
-            totalScore = state.totalScore,
-            onNext = onNext,
-            onPrevious = onPrevious,
-        )
+        RoundScreen.Menu -> {
+            MenuScreen(onStart = onStart)
+        }
+
+        is RoundScreen.Hole -> {
+            HoleScreen(
+                holeNumber = screen.index + 1,
+                score = state.scores[screen.index],
+                onIncrease = onIncrease,
+                onDecrease = onDecrease,
+                onNext = onNext,
+                onPrevious = onPrevious,
+            )
+        }
+        RoundScreen.Summary -> {
+            SummaryScreen(
+                totalScore = state.totalScore,
+                onNext = onNext,
+                onPrevious = onPrevious,
+            )
+        }
     }
 }

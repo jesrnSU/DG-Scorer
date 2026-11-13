@@ -25,10 +25,13 @@ internal fun ScreenLayout(
     onPrevious: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val swipeThreshold = with(LocalDensity.current) { 40.dp.toPx() }
+    val swipeThreshold = with(LocalDensity.current) {
+        40.dp.toPx()
+    }
     val currentNext = rememberUpdatedState(onNext)
     val currentPrevious = rememberUpdatedState(onPrevious)
     val gesturesEnabled = onNext != null || onPrevious != null
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -37,12 +40,20 @@ internal fun ScreenLayout(
                 if (gesturesEnabled) {
                     var dragDistance = 0f
                     detectHorizontalDragGestures(
-                        onDragStart = { dragDistance = 0f },
-                        onDragCancel = { dragDistance = 0f },
+                        onDragStart = {
+                            dragDistance = 0f
+                        },
+                        onDragCancel = {
+                            dragDistance = 0f
+                        },
                         onDragEnd = {
                             when {
-                                dragDistance <= -swipeThreshold -> currentNext.value?.invoke()
-                                dragDistance >= swipeThreshold -> currentPrevious.value?.invoke()
+                                dragDistance <= -swipeThreshold -> {
+                                    currentNext.value?.invoke()
+                                }
+                                dragDistance >= swipeThreshold -> {
+                                    currentPrevious.value?.invoke()
+                                }
                             }
                             dragDistance = 0f
                         },

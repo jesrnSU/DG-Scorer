@@ -6,68 +6,140 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 
-class RoundViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+class RoundViewModel(
+    private val savedStateHandle: SavedStateHandle,
+) : ViewModel() {
     var uiState by mutableStateOf(restoreState())
         private set
 
     fun startRound() {
-        if (uiState.screen == RoundScreen.Menu) {
-            update(uiState.copy(screen = RoundScreen.Hole(0)))
+        if (uiState.screen != RoundScreen.Menu) {
+            return
         }
+
+        val nextState = uiState.copy(screen = RoundScreen.Hole(0))
+        update(nextState)
     }
 
-    fun increaseScore() = changeScore(1)
+    fun increaseScore() {
+        changeScore(1)
+    }
 
-    fun decreaseScore() = changeScore(-1)
+    fun decreaseScore() {
+        changeScore(-1)
+    }
 
     fun next() {
-        when (val screen = uiState.screen) {
-            RoundScreen.Menu -> Unit
-            is RoundScreen.Hole -> update(uiState.copy(
-                screen = if (screen.index == HOLE_COUNT - 1) RoundScreen.Summary
-                    else RoundScreen.Hole(screen.index + 1),
-            ))
-            RoundScreen.Summary -> update(RoundUiState())
+        val nextScreen = when (val screen = uiState.screen) {
+            RoundScreen.Menu -> {
+                return
+            }
+
+            is RoundScreen.Hole -> {
+                if (screen.index == HOLE_COUNT - 1) {
+                    RoundScreen.Summary
+                } else {
+                    RoundScreen.Hole(screen.index + 1)
+                }
+            }
+
+            RoundScreen.Summary -> {
+                update(RoundUiState())
+                return
+            }
         }
+
+        val nextState = uiState.copy(screen = nextScreen)
+        update(nextState)
     }
 
     fun previous() {
-        when (val screen = uiState.screen) {
-            RoundScreen.Menu -> Unit
-            is RoundScreen.Hole -> update(uiState.copy(
-                screen = RoundScreen.Hole((screen.index - 1).coerceAtLeast(0)),
-            ))
-            RoundScreen.Summary -> update(uiState.copy(screen = RoundScreen.Hole(HOLE_COUNT - 1)))
+        val previousScreen = when (val screen = uiState.screen) {
+            RoundScreen.Menu -> {
+                return
+            }
+
+            is RoundScreen.Hole -> {
+                if (screen.index == 0) {
+                    RoundScreen.Menu
+                } else {
+                    RoundScreen.Hole(screen.index - 1)
+                }
+            }
+
+            RoundScreen.Summary -> {
+                RoundScreen.Hole(HOLE_COUNT - 1)
+            }
         }
+
+        val nextState = uiState.copy(screen = previousScreen)
+        update(nextState)
     }
 
     private fun changeScore(amount: Int) {
-        val hole = uiState.screen as? RoundScreen.Hole ?: return
-        update(uiState.copy(scores = uiState.scores.mapIndexed { index, score ->
-            if (index == hole.index) (score + amount).coerceAtLeast(MIN_SCORE) else score
-        }))
+        val screen = uiState.screen
+        if (screen !is RoundScreen.Hole) {
+            return
+        }
+
+        val currentScore = uiState.scores[screen.index]
+        val newScore = (currentScore + amount).coerceAtLeast(MIN_SCORE)
+        val updatedScores = uiState.scores.toMutableList()
+        updatedScores[screen.index] = newScore
+
+        val nextState = uiState.copy(scores = updatedScores.toList())
+        update(nextState)
     }
 
     private fun update(state: RoundUiState) {
         uiState = state
-        // Store Bundle-compatible values so Android can restore a destroyed activity/process.
-        savedStateHandle["scores"] = state.scores.toIntArray()
-        savedStateHandle["page"] = when (val screen = state.screen) {
+
+        // Store Bundle-compatible values so Android can restore the round.
+        val savedPage = when (val screen = state.screen) {
             RoundScreen.Menu -> -1
             is RoundScreen.Hole -> screen.index
             RoundScreen.Summary -> HOLE_COUNT
         }
+
+        savedStateHandle["scores"] = state.scores.toIntArray()
+        savedStateHandle["page"] = savedPage
     }
 
     private fun restoreState(): RoundUiState {
-        val scores = savedStateHandle.get<IntArray>("scores")?.toList()
-            ?.takeIf { it.size == HOLE_COUNT && it.all { score -> score >= MIN_SCORE } }
-            ?: List(HOLE_COUNT) { DEFAULT_SCORE }
-        val screen = when (val page = savedStateHandle.get<Int>("page")) {
-            in 0 until HOLE_COUNT -> RoundScreen.Hole(requireNotNull(page))
+        val scores = restoreScores()
+        val screen = restoreScreen()
+
+        return RoundUiState(
+            screen = screen,
+            scores = scores,
+        )
+    }
+
+    private fun restoreScores(): List<Int> {
+        val savedScores = savedStateHandle.get<IntArray>("scores")
+        if (savedScores == null || savedScores.size != HOLE_COUNT) {
+            return RoundUiState().scores
+        }
+
+        for (score in savedScores) {
+            if (score < MIN_SCORE) {
+                return RoundUiState().scores
+            }
+        }
+
+        return savedScores.toList()
+    }
+
+    private fun restoreScreen(): RoundScreen {
+        val savedPage = savedStateHandle.get<Int>("page")
+        if (savedPage == null) {
+            return RoundScreen.Menu
+        }
+
+        return when (savedPage) {
+            in 0 until HOLE_COUNT -> RoundScreen.Hole(savedPage)
             HOLE_COUNT -> RoundScreen.Summary
             else -> RoundScreen.Menu
         }
-        return RoundUiState(screen = screen, scores = scores)
     }
 }

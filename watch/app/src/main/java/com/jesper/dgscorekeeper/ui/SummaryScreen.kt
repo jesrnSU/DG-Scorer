@@ -7,7 +7,11 @@ import androidx.wear.compose.material.Text
 import com.jesper.dgscorekeeper.R
 
 @Composable
-fun SummaryScreen(totalScore: Int, onNext: () -> Unit, onPrevious: () -> Unit) {
+fun SummaryScreen(
+    totalScore: Int,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
+) {
     ScreenLayout(
         title = stringResource(R.string.total_score),
         onNext = onNext,

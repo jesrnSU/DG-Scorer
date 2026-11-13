@@ -7,10 +7,16 @@ import androidx.wear.compose.material.Text
 import com.jesper.dgscorekeeper.R
 
 @Composable
-fun MenuScreen(onStart: () -> Unit) {
-    ScreenLayout(title = stringResource(R.string.app_name)) {
+fun MenuScreen(
+    onStart: () -> Unit,
+) {
+    ScreenLayout(
+        title = stringResource(R.string.app_name),
+    ) {
         Button(onClick = onStart) {
-            Text(stringResource(R.string.start))
+            Text(
+                text = stringResource(R.string.start),
+            )
         }
     }
 }

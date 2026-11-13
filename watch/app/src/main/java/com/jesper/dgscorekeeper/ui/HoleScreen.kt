@@ -30,12 +30,21 @@ fun HoleScreen(
             style = MaterialTheme.typography.display1,
             color = MaterialTheme.colors.onBackground,
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Button(enabled = score > MIN_SCORE, onClick = onDecrease) {
-                Text(stringResource(R.string.decrease_score))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Button(
+                enabled = score > MIN_SCORE,
+                onClick = onDecrease,
+            ) {
+                Text(
+                    text = stringResource(R.string.decrease_score),
+                )
             }
             Button(onClick = onIncrease) {
-                Text(stringResource(R.string.increase_score))
+                Text(
+                    text = stringResource(R.string.increase_score),
+                )
             }
         }
     }
