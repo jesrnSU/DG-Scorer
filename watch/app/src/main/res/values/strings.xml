@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DG Scorekeeper</string>
-    <string name="welcome_message">Ready for a round?</string>
+    <string name="start">Start</string>
+    <string name="hole_number">Hole %1$d</string>
+    <string name="total_score">Total score</string>
+    <string name="decrease_score">−</string>
+    <string name="increase_score">+</string>
 </resources>
