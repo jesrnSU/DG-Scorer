@@ -1,5 +1,7 @@
 package com.jesper.dgscorekeeper.ui
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +25,8 @@ internal fun ScreenLayout(
     title: String,
     onNext: (() -> Unit)? = null,
     onPrevious: (() -> Unit)? = null,
+    scrollable: Boolean = true,
+    compact: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val swipeThreshold = with(LocalDensity.current) {
@@ -64,13 +68,15 @@ internal fun ScreenLayout(
                     )
                 }
             }
-            .padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+            .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+            .padding(horizontal = if (compact) 16.dp else 24.dp, vertical = if (compact) 24.dp else 28.dp),
+        verticalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 8.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.title3,
+            style = if (compact) MaterialTheme.typography.caption2 else MaterialTheme.typography.title3,
+            maxLines = 1,
             color = MaterialTheme.colors.onBackground,
             textAlign = TextAlign.Center,
         )

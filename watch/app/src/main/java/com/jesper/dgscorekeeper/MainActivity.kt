@@ -17,6 +17,8 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 ScorekeeperApp(
                     state = roundViewModel.uiState,
+                    onOpenSetup = roundViewModel::openSetup,
+                    onPlayerCount = roundViewModel::setPlayerCount,
                     onStart = roundViewModel::startRound,
                     onIncrease = roundViewModel::increaseScore,
                     onDecrease = roundViewModel::decreaseScore,

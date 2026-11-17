@@ -8,7 +8,7 @@ import com.jesper.dgscorekeeper.R
 
 @Composable
 fun SummaryScreen(
-    totalScore: Int,
+    totals: List<Int>,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
 ) {
@@ -17,10 +17,12 @@ fun SummaryScreen(
         onNext = onNext,
         onPrevious = onPrevious,
     ) {
-        Text(
-            text = totalScore.toString(),
-            style = MaterialTheme.typography.display1,
-            color = MaterialTheme.colors.onBackground,
-        )
+        totals.forEachIndexed { player, total ->
+            Text(
+                text = stringResource(R.string.player_total, player + 1, total),
+                style = MaterialTheme.typography.title2,
+                color = MaterialTheme.colors.onBackground,
+            )
+        }
     }
 }

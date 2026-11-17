@@ -9,6 +9,7 @@ class RoundViewModelTest {
     fun `new round starts on hole one with eighteen default scores`() {
         val model = RoundViewModel(SavedStateHandle())
         assertEquals(RoundScreen.Menu, model.uiState.screen)
+        model.openSetup()
         model.startRound()
         assertEquals(RoundScreen.Hole(0), model.uiState.screen)
         val expectedScores = List(18) {
@@ -21,6 +22,7 @@ class RoundViewModelTest {
     @Test
     fun `scores belong to each hole and cannot fall below one`() {
         val model = RoundViewModel(SavedStateHandle())
+        model.openSetup()
         model.startRound()
         repeat(5) {
             model.decreaseScore()
@@ -36,6 +38,7 @@ class RoundViewModelTest {
     @Test
     fun `summary allows returning to hole eighteen and advancing resets the round`() {
         val model = RoundViewModel(SavedStateHandle())
+        model.openSetup()
         model.startRound()
         repeat(17) {
             model.next()
@@ -51,6 +54,7 @@ class RoundViewModelTest {
         model.next()
         model.next()
         assertEquals(RoundUiState(), model.uiState)
+        model.openSetup()
         model.startRound()
         assertEquals(RoundScreen.Hole(0), model.uiState.screen)
         val expectedScores = List(18) {
@@ -60,19 +64,21 @@ class RoundViewModelTest {
     }
 
     @Test
-    fun `previous from hole one returns to menu and preserves scores`() {
+    fun `previous from hole one returns to setup and preserves scores`() {
         val handle = SavedStateHandle()
         val model = RoundViewModel(handle)
+        model.openSetup()
         model.startRound()
         model.increaseScore()
 
         model.previous()
 
-        assertEquals(RoundScreen.Menu, model.uiState.screen)
+        assertEquals(RoundScreen.Setup, model.uiState.screen)
         assertEquals(4, model.uiState.scores[0])
 
         val restoredModel = RoundViewModel(handle)
-        assertEquals(RoundScreen.Menu, restoredModel.uiState.screen)
+        assertEquals(RoundScreen.Setup, restoredModel.uiState.screen)
+        restoredModel.openSetup()
         restoredModel.startRound()
         assertEquals(RoundScreen.Hole(0), restoredModel.uiState.screen)
         assertEquals(4, restoredModel.uiState.scores[0])
@@ -92,6 +98,7 @@ class RoundViewModelTest {
     fun `saved state restores hole scores and summary and records reset`() {
         val handle = SavedStateHandle()
         val model = RoundViewModel(handle)
+        model.openSetup()
         model.startRound()
         model.increaseScore()
         model.next()
@@ -102,5 +109,29 @@ class RoundViewModelTest {
         assertEquals(RoundScreen.Summary, RoundViewModel(handle).uiState.screen)
         model.next()
         assertEquals(RoundUiState(), RoundViewModel(handle).uiState)
+    }
+    @Test
+    fun `setup bounds players and preserves independent scores`() {
+        val handle = SavedStateHandle()
+        val model = RoundViewModel(handle)
+        model.startRound()
+        assertEquals(RoundScreen.Menu, model.uiState.screen)
+        model.openSetup()
+        model.setPlayerCount(9)
+        assertEquals(4, model.uiState.playerCount)
+        model.setPlayerCount(0)
+        assertEquals(1, model.uiState.playerCount)
+        model.setPlayerCount(4)
+        model.next()
+        assertEquals(RoundScreen.Setup, model.uiState.screen)
+        model.startRound()
+        model.increaseScore(3)
+        model.decreaseScore(1)
+        model.increaseScore(4)
+        assertEquals(listOf(3, 2, 3, 4), model.uiState.playerScores.map { it[0] })
+        model.next()
+        model.increaseScore(0)
+        assertEquals(model.uiState, RoundViewModel(handle).uiState)
+        assertEquals(listOf(55, 53, 54, 55), model.uiState.totals)
     }
 }

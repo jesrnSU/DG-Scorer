@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">DG Scorekeeper</string>
-    <string name="start">Start</string>
+    <string name="start">Play</string>
     <string name="hole_number">Hole %1$d</string>
     <string name="total_score">Total score</string>
     <string name="decrease_score">−</string>
     <string name="increase_score">+</string>
+    <string name="round_setup">Round setup</string>
+    <string name="closest_course">Closest course</string>
+    <string name="sample_course">Placeholder · location pending</string>
+    <string name="players">Players: %1$d</string>
+    <string name="player_number">Player %1$d</string>
+    <string name="player_total">Player %1$d: %2$d</string>
+    <string name="start_round">Start Round</string>
+    <string name="hole_details">%1$d m · Par %2$d</string>
+    <string name="sample_data">Sample hole data</string>
+    <string name="compact_hole_details">Hole %1$d · %2$d m · Par %3$d</string>
+    <string name="decrease_player_score">Decrease throws for player %1$d</string>
+    <string name="increase_player_score">Increase throws for player %1$d</string>
 </resources>
