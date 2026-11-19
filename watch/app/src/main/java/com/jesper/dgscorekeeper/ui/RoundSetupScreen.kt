@@ -19,7 +19,6 @@ fun RoundSetupScreen(
     onPrevious: () -> Unit,
 ) {
     ScreenLayout(title = stringResource(R.string.round_setup), onPrevious = onPrevious) {
-        Text(stringResource(R.string.closest_course))
         Text(state.course.name)
         Text(stringResource(R.string.sample_course))
         Text(stringResource(R.string.players, state.playerCount))
