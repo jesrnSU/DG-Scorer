@@ -157,6 +157,42 @@ func (r *RoundRepository) insertRound(
 	return roundID, nil
 }
 
+// inserts a new course row if courseName does not exist and returns the courses newly created course_id
+func (r *RoundRepository) getCourseId(
+	ctx context.Context,
+	tx pgx.Tx,
+	courseName string,
+) (int64, error) {
+	var courseID int64
+	var courseNameLowercase = strings.ToLower(courseName)
+
+	err := tx.QueryRow(ctx, `
+		SELECT course_id FROM courses WHERE name = $1	
+	`, courseNameLowercase).Scan(&courseID)
+	if err == nil {
+		return courseID, nil
+	}
+
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return 0, err
+	}
+	
+	const insertQuery = `
+		WITH inserted AS (
+			INSERT INTO courses (name) VALUES ($1)	
+			ON CONFLICT (name) DO NOTHING 
+			RETURNING course_id
+		)	
+		SELECT course_id FROM inserted
+		UNION ALL
+		SELECT course_id FROM courses WHERE name = $1
+		LIMIT 1;
+	`
+	
+	err = db.QueryRow(ctx, insertQuery, courseNameLowercase).Scan(&courseID)
+	return courseID, err 
+}
+
 func (r *RoundRepository) insertHoleScores(
 	ctx context.Context,
 	tx pgx.Tx,
