@@ -37,9 +37,32 @@ func (r *RoundRepository) SaveRound(
 	}
 	defer tx.Rollback(ctx)
 
-	roundID, err := r.insertRound(ctx, tx, round.Username, round.CourseName, date)
+	userID, err := findUserID(ctx, tx, round.Username)
 	if err != nil {
 		return 0, err
+	}
+
+	courseID, err := findOrCreateCourse(ctx, tx, round.CourseName)
+	if err != nil {
+		return 0, err
+	}
+
+	layoutName := round.LayoutName
+	if strings.TrimSpace(layoutName) == "" {
+		layoutName = "Default"
+	}
+	if err := ensureCourseLayout(ctx, tx, courseID, layoutName, round.Holes); err != nil {
+		return 0, err
+	}
+
+	var roundID int64
+	err = tx.QueryRow(ctx, `
+		INSERT INTO "round" (date, user_id, course_id, layout_name)
+		VALUES ($1, $2, $3, $4)
+		RETURNING round_id
+	`, date, userID, courseID, layoutName).Scan(&roundID)
+	if err != nil {
+		return 0, fmt.Errorf("insert round: %w", err)
 	}
 
 	if err := r.insertHoleScores(ctx, tx, roundID, round.Holes); err != nil {
@@ -57,14 +80,14 @@ func (r *RoundRepository) GetUserRounds(
 	ctx context.Context,
 	username string,
 ) ([]rounds.Round, error) {
-
 	rows, err := r.pool.Query(ctx, `
-        SELECT r.round_id, u.username, r.course_name, r.date,
+        SELECT r.round_id, u.username, c.name, r.layout_name, r.date,
                h.hole_number, h.par, h.strokes
-        FROM rounds r
+        FROM "round" r
         JOIN users u ON u.id = r.user_id
-        LEFT JOIN hole_scores h ON h.round_id = r.round_id
-        WHERE LOWER(u.username) = $1
+        JOIN course c ON c.course_id = r.course_id
+        LEFT JOIN round_hole_score h ON h.round_id = r.round_id
+        WHERE LOWER(u.username) = LOWER($1)
         ORDER BY r.date DESC, r.round_id DESC, h.hole_number
     `, username)
 	if err != nil {
@@ -77,14 +100,14 @@ func (r *RoundRepository) GetUserRounds(
 		var round rounds.Round
 		var date time.Time
 		var holeNumber, par, strokes *int
-		if err := rows.Scan(&round.Id, &round.Username, &round.CourseName, &date,
+		if err := rows.Scan(&round.ID, &round.Username, &round.CourseName, &round.LayoutName, &date,
 			&holeNumber, &par, &strokes); err != nil {
 			return nil, fmt.Errorf("scan user round: %w", err)
 		}
 
 		// Joined rows repeat the round fields for each hole.
 		last := len(userRounds) - 1
-		if last < 0 || userRounds[last].Id != round.Id {
+		if last < 0 || userRounds[last].ID != round.ID {
 			round.Date = date.UTC().Format(time.RFC3339Nano)
 			round.Holes = make([]rounds.HoleScore, 0)
 			userRounds = append(userRounds, round)
@@ -124,83 +147,78 @@ func (r *RoundRepository) GetAllUsers(
 	return users, nil
 }
 
-func (r *RoundRepository) insertRound(
-	ctx context.Context,
-	tx pgx.Tx,
-	username string,
-	course_name string,
-	date time.Time,
-) (int64, error) {
-	var round_id int64
-	var user_id int64
-
-	err := tx.QueryRow(ctx, `SELECT id FROM users WHERE LOWER(username) = $1`, username).Scan(&user_id)
+func findUserID(ctx context.Context, tx pgx.Tx, username string) (int64, error) {
+	var userID int64
+	err := tx.QueryRow(ctx, `SELECT id FROM users WHERE LOWER(username) = LOWER($1)`, username).Scan(&userID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, rounds.ErrUsernameNotFound
 	}
 	if err != nil {
 		return 0, fmt.Errorf("find round user: %w", err)
 	}
-
-	err = tx.QueryRow(ctx, `
-		INSERT INTO rounds (user_id, course_name, date)
-		VALUES ($1, LOWER($2), $3)
-		RETURNING round_id
-	`, user_id, course_name, date).Scan(&round_id)
-	if err != nil {
-		return 0, fmt.Errorf("insert round: %w", err)
-	}
-
-	return round_id, nil
+	return userID, nil
 }
 
-// inserts a new course row if courseName does not exist and returns the courses newly created course_id
-func (r *RoundRepository) getCourseId(
-	ctx context.Context,
-	tx pgx.Tx,
-	course_name string,
-) (int64, error) {
-	var course_id int64
-
+func findOrCreateCourse(ctx context.Context, tx pgx.Tx, courseName string) (int64, error) {
+	var courseID int64
 	err := tx.QueryRow(ctx, `
-		SELECT course_id FROM courses WHERE name = $1	
-	`, course_name).Scan(&course_id)
-	if err == nil {
-		return course_id, nil
+		INSERT INTO course (name)
+		VALUES ($1)
+		ON CONFLICT (name) DO NOTHING
+		RETURNING course_id
+	`, courseName).Scan(&courseID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		// A separate statement can see a conflicting row committed during the insert.
+		err = tx.QueryRow(ctx, `SELECT course_id FROM course WHERE name = $1`, courseName).Scan(&courseID)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("find or create course: %w", err)
+	}
+	return courseID, nil
+}
+
+func ensureCourseLayout(ctx context.Context, tx pgx.Tx, courseID int64, layoutName string, holes []rounds.HoleScore) error {
+	layoutPar := 0
+	for _, hole := range holes {
+		layoutPar += hole.Par
 	}
 
-	if !errors.Is(err, pgx.ErrNoRows) {
-		return 0, err
+	result, err := tx.Exec(ctx, `
+		INSERT INTO course_layout (layout_name, course_id, par)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (layout_name, course_id) DO NOTHING
+	`, layoutName, courseID, layoutPar)
+	if err != nil {
+		return fmt.Errorf("create course layout: %w", err)
 	}
-	
-	const insertQuery = `
-		WITH inserted AS (
-			INSERT INTO courses (name) VALUES ($1)	
-			ON CONFLICT (name) DO NOTHING 
-			RETURNING course_id
-		)	
-		SELECT course_id FROM inserted
-		UNION ALL
-		SELECT course_id FROM courses WHERE name = $1
-		LIMIT 1;
-	`
-	
-	err = db.QueryRow(ctx, insertQuery, course_name).Scan(&course_id)
-	return course_id, err 
+	if result.RowsAffected() == 0 {
+		return nil
+	}
+
+	for _, hole := range holes {
+		_, err := tx.Exec(ctx, `
+			INSERT INTO course_layout_holes (layout_name, course_id, hole_nr, hole_par)
+			VALUES ($1, $2, $3, $4)
+		`, layoutName, courseID, hole.HoleNumber, hole.Par)
+		if err != nil {
+			return fmt.Errorf("insert layout hole %d: %w", hole.HoleNumber, err)
+		}
+	}
+	return nil
 }
 
 func (r *RoundRepository) insertHoleScores(
 	ctx context.Context,
 	tx pgx.Tx,
-	round_id int64,
+	roundID int64,
 	holes []rounds.HoleScore,
 ) error {
 	for _, hole := range holes {
 		_, err := tx.Exec(ctx, `
-			INSERT INTO hole_scores
+			INSERT INTO round_hole_score
 				(round_id, hole_number, par, strokes)
 			VALUES ($1, $2, $3, $4)
-		`, round_id, hole.HoleNumber, hole.Par, hole.Strokes)
+		`, roundID, hole.HoleNumber, hole.Par, hole.Strokes)
 		if err != nil {
 			return fmt.Errorf("insert hole %d: %w", hole.HoleNumber, err)
 		}

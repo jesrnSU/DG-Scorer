@@ -11,8 +11,9 @@ type HoleScore struct {
 // Round describes a completed round. Date is an RFC 3339 timestamp with a timezone.
 type Round struct {
 	Username   string      `json:"username"`
-	Id         int64       `json:"id"`
+	ID         int64       `json:"id"`
 	CourseName string      `json:"course_name"`
+	LayoutName string      `json:"course_layout_name"`
 	Date       string      `json:"date"`
 	Holes      []HoleScore `json:"holes"`
 }
