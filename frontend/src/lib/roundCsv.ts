@@ -18,8 +18,10 @@ export function parseRoundCsv(text: string): RoundInput {
   const usernameColumn = headers.indexOf('PlayerName');
   const username = playerValues[usernameColumn];
   const courseColumn = headers.indexOf('CourseName');
+  const layoutColumn = headers.indexOf('LayoutName');
   const dateColumn = headers.indexOf('StartDate');
   const courseName = playerValues[courseColumn];
+  const courseLayout = playerValues[layoutColumn];
   const startDate = playerValues[dateColumn] ?? '';
   // CSV: 2026-10-10 1542+0200 → API: 2026-10-10T15:42:00+02:00
   const [day, time] = startDate.split(' ');
@@ -52,6 +54,7 @@ export function parseRoundCsv(text: string): RoundInput {
   return {
     username,
     course_name: courseName,
+    course_layout_name: courseLayout,
     date,
     holes,
   };

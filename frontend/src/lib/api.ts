@@ -18,6 +18,7 @@ export interface RoundInput {
   // Must match an existing user; the backend resolves the user's database ID.
   username: string;
   course_name: string;
+  course_layout_name: string;
   date: string; // RFC 3339 timestamp including timezone.
   holes: HoleScore[];
 }
