@@ -57,7 +57,6 @@ func (r *RoundRepository) GetUserRounds(
 	ctx context.Context,
 	username string,
 ) ([]rounds.Round, error) {
-	var usernameLowercase = strings.ToLower(username)
 
 	rows, err := r.pool.Query(ctx, `
         SELECT r.round_id, u.username, r.course_name, r.date,
@@ -67,7 +66,7 @@ func (r *RoundRepository) GetUserRounds(
         LEFT JOIN hole_scores h ON h.round_id = r.round_id
         WHERE LOWER(u.username) = $1
         ORDER BY r.date DESC, r.round_id DESC, h.hole_number
-    `, usernameLowercase)
+    `, username)
 	if err != nil {
 		return nil, fmt.Errorf("get user rounds: %w", err)
 	}
@@ -129,15 +128,13 @@ func (r *RoundRepository) insertRound(
 	ctx context.Context,
 	tx pgx.Tx,
 	username string,
-	courseName string,
+	course_name string,
 	date time.Time,
 ) (int64, error) {
 	var round_id int64
-	var usernameLowercase = strings.ToLower(username)
-	var courseNameLowercase = strings.ToLower(courseName)
-
 	var user_id int64
-	err := tx.QueryRow(ctx, `SELECT id FROM users WHERE LOWER(username) = $1`, usernameLowercase).Scan(&user_id)
+
+	err := tx.QueryRow(ctx, `SELECT id FROM users WHERE LOWER(username) = $1`, username).Scan(&user_id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, rounds.ErrUsernameNotFound
 	}
@@ -147,9 +144,9 @@ func (r *RoundRepository) insertRound(
 
 	err = tx.QueryRow(ctx, `
 		INSERT INTO rounds (user_id, course_name, date)
-		VALUES ($1, $2, $3)
+		VALUES ($1, LOWER($2), $3)
 		RETURNING round_id
-	`, user_id, courseNameLowercase, date).Scan(&round_id)
+	`, user_id, course_name, date).Scan(&round_id)
 	if err != nil {
 		return 0, fmt.Errorf("insert round: %w", err)
 	}
@@ -161,14 +158,13 @@ func (r *RoundRepository) insertRound(
 func (r *RoundRepository) getCourseId(
 	ctx context.Context,
 	tx pgx.Tx,
-	courseName string,
+	course_name string,
 ) (int64, error) {
 	var course_id int64
-	var courseNameLowercase = strings.ToLower(courseName)
 
 	err := tx.QueryRow(ctx, `
 		SELECT course_id FROM courses WHERE name = $1	
-	`, courseNameLowercase).Scan(&course_id)
+	`, course_name).Scan(&course_id)
 	if err == nil {
 		return course_id, nil
 	}
@@ -189,7 +185,7 @@ func (r *RoundRepository) getCourseId(
 		LIMIT 1;
 	`
 	
-	err = db.QueryRow(ctx, insertQuery, courseNameLowercase).Scan(&course_id)
+	err = db.QueryRow(ctx, insertQuery, course_name).Scan(&course_id)
 	return course_id, err 
 }
 
@@ -209,6 +205,5 @@ func (r *RoundRepository) insertHoleScores(
 			return fmt.Errorf("insert hole %d: %w", hole.HoleNumber, err)
 		}
 	}
-
 	return nil
 }
