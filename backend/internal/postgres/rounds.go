@@ -132,12 +132,12 @@ func (r *RoundRepository) insertRound(
 	courseName string,
 	date time.Time,
 ) (int64, error) {
-	var roundID int64
+	var round_id int64
 	var usernameLowercase = strings.ToLower(username)
 	var courseNameLowercase = strings.ToLower(courseName)
 
-	var userID int64
-	err := tx.QueryRow(ctx, `SELECT id FROM users WHERE LOWER(username) = $1`, usernameLowercase).Scan(&userID)
+	var user_id int64
+	err := tx.QueryRow(ctx, `SELECT id FROM users WHERE LOWER(username) = $1`, usernameLowercase).Scan(&user_id)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, rounds.ErrUsernameNotFound
 	}
@@ -149,12 +149,12 @@ func (r *RoundRepository) insertRound(
 		INSERT INTO rounds (user_id, course_name, date)
 		VALUES ($1, $2, $3)
 		RETURNING round_id
-	`, userID, courseNameLowercase, date).Scan(&roundID)
+	`, user_id, courseNameLowercase, date).Scan(&round_id)
 	if err != nil {
 		return 0, fmt.Errorf("insert round: %w", err)
 	}
 
-	return roundID, nil
+	return round_id, nil
 }
 
 // inserts a new course row if courseName does not exist and returns the courses newly created course_id
@@ -163,14 +163,14 @@ func (r *RoundRepository) getCourseId(
 	tx pgx.Tx,
 	courseName string,
 ) (int64, error) {
-	var courseID int64
+	var course_id int64
 	var courseNameLowercase = strings.ToLower(courseName)
 
 	err := tx.QueryRow(ctx, `
 		SELECT course_id FROM courses WHERE name = $1	
-	`, courseNameLowercase).Scan(&courseID)
+	`, courseNameLowercase).Scan(&course_id)
 	if err == nil {
-		return courseID, nil
+		return course_id, nil
 	}
 
 	if !errors.Is(err, pgx.ErrNoRows) {
@@ -189,14 +189,14 @@ func (r *RoundRepository) getCourseId(
 		LIMIT 1;
 	`
 	
-	err = db.QueryRow(ctx, insertQuery, courseNameLowercase).Scan(&courseID)
-	return courseID, err 
+	err = db.QueryRow(ctx, insertQuery, courseNameLowercase).Scan(&course_id)
+	return course_id, err 
 }
 
 func (r *RoundRepository) insertHoleScores(
 	ctx context.Context,
 	tx pgx.Tx,
-	roundID int64,
+	round_id int64,
 	holes []rounds.HoleScore,
 ) error {
 	for _, hole := range holes {
@@ -204,7 +204,7 @@ func (r *RoundRepository) insertHoleScores(
 			INSERT INTO hole_scores
 				(round_id, hole_number, par, strokes)
 			VALUES ($1, $2, $3, $4)
-		`, roundID, hole.HoleNumber, hole.Par, hole.Strokes)
+		`, round_id, hole.HoleNumber, hole.Par, hole.Strokes)
 		if err != nil {
 			return fmt.Errorf("insert hole %d: %w", hole.HoleNumber, err)
 		}
